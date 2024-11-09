@@ -1,8 +1,5 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
-using OrchardCore.Entities;
 using OrchardCore.Search.Abstractions;
 using OrchardCore.Search.Elasticsearch;
 using OrchardCore.Search.Elasticsearch.Core.Models;
@@ -12,17 +9,12 @@ using OrchardCore.Settings;
 
 namespace OrchardCore.Search.Lucene.Handler;
 
-public class ElasticsearchAuthorizationHandler : AuthorizationHandler<PermissionRequirement>
+public class ElasticsearchAuthorizationHandler(IServiceProvider serviceProvider) : AuthorizationHandler<PermissionRequirement>
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
 
     private IAuthorizationService _authorizationService;
     private ISiteService _siteService;
-
-    public ElasticsearchAuthorizationHandler(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-    }
 
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
     {
@@ -37,9 +29,7 @@ public class ElasticsearchAuthorizationHandler : AuthorizationHandler<Permission
             return;
         }
 
-        var service = _serviceProvider.GetService<ElasticsearchService>();
-
-        if (service == null || service.Name != parameters.ServiceName)
+        if (ElasticsearchService.Key != parameters.ServiceName)
         {
             // Only validate if Elasticsearch is requested.
             return;
@@ -47,7 +37,7 @@ public class ElasticsearchAuthorizationHandler : AuthorizationHandler<Permission
 
         var indexName = await GetIndexNameAsync(parameters);
 
-        if (!String.IsNullOrEmpty(indexName))
+        if (!string.IsNullOrEmpty(indexName))
         {
             _authorizationService ??= _serviceProvider?.GetService<IAuthorizationService>();
 
@@ -64,14 +54,13 @@ public class ElasticsearchAuthorizationHandler : AuthorizationHandler<Permission
 
     private async Task<string> GetIndexNameAsync(SearchPermissionParameters parameters)
     {
-        if (!String.IsNullOrWhiteSpace(parameters.IndexName))
+        if (!string.IsNullOrWhiteSpace(parameters.IndexName))
         {
             return parameters.IndexName.Trim();
         }
 
         _siteService ??= _serviceProvider.GetRequiredService<ISiteService>();
-        var siteSettings = await _siteService.GetSiteSettingsAsync();
 
-        return siteSettings.As<ElasticSettings>().SearchIndex;
+        return (await _siteService.GetSettingsAsync<ElasticSettings>()).SearchIndex;
     }
 }

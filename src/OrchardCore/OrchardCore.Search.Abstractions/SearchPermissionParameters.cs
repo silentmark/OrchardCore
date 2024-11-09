@@ -1,5 +1,3 @@
-using System;
-
 namespace OrchardCore.Search.Abstractions;
 
 public class SearchPermissionParameters
@@ -10,7 +8,7 @@ public class SearchPermissionParameters
 
     public SearchPermissionParameters(string serviceName, string indexName)
     {
-        if (String.IsNullOrEmpty(serviceName))
+        if (string.IsNullOrEmpty(serviceName))
         {
             throw new ArgumentException($"{nameof(serviceName)} cannot be null or empty");
         }

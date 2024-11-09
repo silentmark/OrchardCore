@@ -32,4 +32,4 @@ app.UseStaticFiles();
 
 app.UseOrchardCore();
 
-app.Run();
+await app.RunAsync();
